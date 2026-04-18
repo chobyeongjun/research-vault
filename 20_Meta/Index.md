@@ -29,3 +29,15 @@
 
 ## Skills
 (아직 없음)
+
+## 다음 미팅 준비
+```dataview
+TABLE date, file.folder FROM "realtime-vision-control/meetings" OR "assistive-vector-treadmill/meetings"
+SORT date DESC
+LIMIT 5
+미완성 실험 (tier: raw)
+TABLE date, title FROM "realtime-vision-control/experiments" OR "assistive-vector-treadmill/experiments"
+WHERE tier = "raw"
+SORT date DESC
+논문 진행 현황
+TABLE file.name, status FROM "realtime-vision-control/papers" OR "assistive-vector-treadmill/papers"

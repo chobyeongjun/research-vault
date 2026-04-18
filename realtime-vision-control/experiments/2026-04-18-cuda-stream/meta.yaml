@@ -1,0 +1,52 @@
+experiment_id: 2026-04-18-cuda-stream
+topic: realtime-vision-control
+date: 2026-04-18
+title: CUDA_Stream 3-stage + 20ms HARD LIMIT 실시간성 보장
+status: completed
+tier: raw  # 아직 미팅/논문용 figure 정제 전
+
+goal:
+  - Python+C++ 동시 실행 시 p99 > 20ms spike 제거
+  - stale keypoint가 AK60 70N까지 밀어올리는 경로 차단
+
+setup:
+  platform: Jetson Orin NX 16GB, MAXN, jetson_clocks
+  camera: ZED X Mini SVGA 960x600 @120fps, PERFORMANCE depth
+  model: yolo26s-lower6-v2.engine (TRT FP16, imgsz=640)
+  method: B (IMU World Frame, static R, skip_imu=True)
+  cpu: Python 2-5, C++ 6-7, system 0-1
+  rt: SCHED_FIFO priority 90 (chrt -r 90 via launch_clean.sh)
+
+results:
+  duration_s: 300
+  e2e_latency_mean_ms: 13.8
+  e2e_latency_p99_ms: 19.8
+  hard_limit_20ms_violation_rate: 0.00031  # 0.031%
+  violation_frames_reach_motor: 0  # valid=False로 차단
+  hz: 67~73
+
+key_findings:
+  - launch_clean.sh 래퍼로 재실행 HARD LIMIT 위반율 60%+ → 0.031% 복원
+  - Argus IPC (/dev/shm/sem.ipc_test_*) 누적이 카메라 초기화 점진 열화 원인
+  - 20ms frame-skip pattern: publish_valid=False로 C++ control loop skip
+  - IMU 쿼터니언 N=20 평균이 수동 pitch 덮어쓰기보다 안정
+
+artifacts:
+  - run_stream_demo.py (3-stage pipeline + HARD LIMIT)
+  - launch_clean.sh (sudo 래퍼, Argus clean)
+  - zed_gpu_bridge.py (IMU quaternion)
+  - watchdog.py (safe-stop + estop sentinel)
+  - view_sagittal.py (auto-fit visual)
+
+related_learnings:
+  - reward: launch_clean.sh 래퍼 패턴
+  - reward: 20ms HARD LIMIT frame-skip
+  - reward: IMU 쿼터니언 평균 방식
+
+linked_handover: ../../../00_Raw/2026-04-19-handover-cuda-stream-perception.md
+linked_master: ../../../10_Wiki/perception-evolution-master.md
+
+next:
+  - C++ 제어와 CUDA_Stream SHM 통합 (/hwalker_pose_cuda ↔ /hwalker_pose)
+  - Method B knee_err 좌우 비대칭 검증
+  - Teensy 실제 모터 구동 테스트

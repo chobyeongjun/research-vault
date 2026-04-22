@@ -55,6 +55,7 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - `2026-04-23` | graphify 정체 판단 (중간 오판) | `--help` 출력만 보고 "Karpathy LLM Wiki 패턴 = graphify"로 **단정**. 그 다음엔 "AST 코드 전용"으로 **또 단정**. 둘 다 틀렸음 — 실제로는 **Claude Code 슬래시 커맨드 skill**이 메인 엔진이고 CLI는 보조. `skill.md`를 마지막에야 읽음 | **AR-7 후보**: 외부 툴 정체 파악 시 **소스 전수 확인 전까지 단정 금지**. 특히 `skill.md`·`__main__.py`·CLI entry script 3개는 필수 선독.
 - `2026-04-23` | graphify bootstrap 경로 | `graphify hook install` 후 empty commit으로 bootstrap 시도 → 훅이 `CHANGED` 빈 값이면 `exit 0`이라 무반응. post-checkout 훅도 `graphify-out/` 기존재 조건. `_rebuild_code` 직접 호출도 "No code files found"로 실패 | 진짜 full-build는 **Claude Code 세션 내 `/graphify .` 슬래시 커맨드**. CLI hook은 증분 갱신 전용 (코드만). docs/md는 LLM 서브에이전트 병렬 추출 경유.
 - `2026-04-23` | Lessons vs graphify-out/memory 역할 분리 | 제가 만든 `Lessons.md` RL-loop은 **사람이 읽는 distilled 규칙 레이어**. graphify의 `graphify-out/memory/`는 **기계가 읽는 Q&A 히스토리**. 서로 대체 아니라 **보완** | Win 확정: 두 레이어 공존. Lessons는 Active Rules(수기 승격), memory는 쿼리 시 자동 save-result.
+- `2026-04-23` | `/graphify .` 최초 build 시 rate limit (429) | Vault 46 md 파일을 subagent 4개 병렬 dispatch → **분당 입력 30K 토큰 한도 초과** (Sonnet 4.6). chunks 1/3/4/5 실패, 2만 성공. 재시도도 window 미리셋으로 또 429 | **AR-8 후보**: `/graphify` 최초 build 시 **병렬 subagent 2개 이하**로 강제. chunk 크기도 20-25 → 10-12로 반감. skill.md 기본값(병렬 dispatch)은 코드 repo 기준이라 markdown vault엔 과함. 향후 graphify 실행 전 해당 지침을 inner 세션에 전달 필요.
 
 ---
 

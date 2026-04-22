@@ -34,5 +34,5 @@ tags: [experiment, benchmark, model-comparison]
 - MediaPipe: 워커 환경 인식률 94.4% + E2E 63ms → 탈락
 
 ## 관련
-- [[../../../10_Wiki/admittance-control]]
-- [[../../../10_Wiki/ak60-motor]]
+- [[admittance-control]]
+- [[ak60-motor]]

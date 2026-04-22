@@ -16,8 +16,6 @@ confidence_score: 0.95
 
 # Perception Evolution Master
 
-> **통합 wiki 노트:** [[perception-evolution-master]] (이 문서의 마스터 카피)
->
 > **H-Walker 실시간 자세 인식의 전체 여정.**
 > 어떤 library를 놓고 비교했고, 왜 YOLO26s-lower6로 정착했고, 어떻게 30fps → 73Hz → 20ms HARD LIMIT 보장까지 왔는지.
 
@@ -308,3 +306,43 @@ h-walker-ws/src/hw_perception/
 
 *Last updated: 2026-04-18*
 *이 문서는 Cowork `cowork_project_summary`/`cowork_paper_data` 호출 시 perception 카테고리의 주요 재료로 사용됨*
+
+---
+
+## 부록: 레포 브랜치 가이드 (2026-04-21 추가)
+
+### `realtime-vision-control` 레포의 두 브랜치
+
+**`feature/track-a-onepipeline`** — Track A 메인라인
+- 위치: `src/perception/realtime/` + `src/perception/benchmarks/`
+- 엔트리: `pipeline_main.py --no-display --method B`
+- 검증: 13.7ms / 73Hz (Python only), 14.6ms / 67Hz (Python+C++)
+- 사용 시점: 일반 실험·디버깅
+- C++ 제어 루프는 별도 h-walker-ws 레포
+
+**`feature/track-b-cuda-stream`** — Track B 4-stream HARD LIMIT
+- 위치: `src/perception/CUDA_Stream/` (CUDA_Stream만, perception/benchmarks 없음)
+- 엔트리: `sudo src/perception/CUDA_Stream/launch_clean.sh 60`
+- 검증: p99 19.8ms, HARD LIMIT 위반 0.031% (300s)
+- 사용 시점: 실제 환자 실험·논문 측정 (안전 보장)
+
+### 두 브랜치를 분리한 이유 (2026-04-20 정리)
+- 4/20 사건: outdated `trt_pose_engine_zerocopy.py`(v1, single stream)을 최신본으로 오인하고 그 위에 4-stream을 처음부터 재발명 → 22ms/44Hz로 퇴보
+- 원인: 원격 main에 v1과 v2(CUDA_Stream)가 혼재했고 어느 게 "최신"인지 명시 안 됨
+- 해결: 두 브랜치로 분리 + CLAUDE.md에 명시 + 두 트랙 가이드 박제
+
+### 절대 다음 세션이 답습해선 안 되는 것
+1. **Display + pipeline 같은 스크립트** — `run_sagittal_display.py`처럼 → 74→42Hz 반토막
+2. **Python에서 Teensy 직접 송신** — C++ RT 보장·watchdog·force clamp 모두 우회. 안전 위배
+3. **단일 stream zerocopy(v1)에서 출발** — 4-stream(v2)이 검증된 표준
+4. **IMU 가속도계 raw로 R 계산** — SDK quaternion fusion 사용
+
+### Vault sync 워크플로우
+```bash
+cd ~/realtime-vision-control
+bash scripts/sync-from-vault.sh   # research-vault → docs/
+git diff docs/                     # 검토
+git add docs/ && git commit -m "docs: sync from vault YYYY-MM-DD"
+git push
+```
+

@@ -24,4 +24,4 @@ tags: [experiment, cuda, realtime]
 
 ## 관련 파일
 - [[plan]] — 5단계 구현 계획 (Phase 1~5)
-- [[../../../00_Raw/2026-04-19-handover-cuda-stream-perception]] — 인수인계
+- [[2026-04-19-handover-cuda-stream-perception]] — 인수인계

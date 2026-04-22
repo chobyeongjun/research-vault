@@ -99,7 +99,7 @@ H-Walker용 실시간 카메라 포즈 인식 + 제어 시스템. 이 폴더는 
 
 ## Related projects
 
-- [[assistive-vector-treadmill]] — H-Walker treadmill 환경 assistive force vector 연구 (별도)
+- [[assistive-vector-treadmill/README|assistive-vector-treadmill]] — H-Walker treadmill 환경 assistive force vector 연구 (별도)
 
 ---
 

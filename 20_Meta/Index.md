@@ -66,6 +66,7 @@ summary: Vault 전체 MOC. 모든 wiki 노트가 여기서 도달 가능. Claude
 - [[claude-rules]] — 세션 시작 규칙
 - [[Lessons]] — RL-loop 메모리 (wins/misses, Active Rules)
 - [[Log]] — 작업 로그
+- [[obsidian-sync-setup]] — Obsidian Git 자동 싱크 셋업 가이드
 
 ---
 

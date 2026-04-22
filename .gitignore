@@ -2,3 +2,18 @@
 .obsidian/workspace-mobile.json
 .trash/
 *.tmp
+
+# graphify — keep graph.json + GRAPH_REPORT.md + cost.json (shared),
+# ignore session-local caches and heavy regenerables
+graphify-out/.graphify_python
+graphify-out/.graphify_*.json
+graphify-out/.graphify_chunk_*.json
+graphify-out/needs_update
+graphify-out/.needs_update
+graphify-out/graph.html
+graphify-out/graph.svg
+graphify-out/graph.graphml
+graphify-out/cypher.txt
+graphify-out/memory/
+graphify-out/obsidian/
+graphify-out/.semantic_cache/

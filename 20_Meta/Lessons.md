@@ -51,6 +51,7 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - (history) | `Index.md` | 37개 노트 중 18개만 나열 (커버리지 48%) → LLM이 Index만 보면 절반을 "없다"고 오인 | Index는 항상 전수 나열. 누락 감지 스크립트 필요.
 - `2026-04-22` | self-title `# [[Title]]` 패턴 | 파일명과 다른 제목을 wikilink로 감싸면 **phantom graph 노드** 생성 (e.g. `# [[LLM Wiki]]` in `llm-wiki.md` → "LLM Wiki"라는 빈 노드). 16개 파일에서 발견 | H1에는 wikilink 래퍼 금지. 평문 제목만.
 - `2026-04-22` | H1 self-link 일괄 수정 | sed로 `# \[\[X\]\]` → `# X` 정규치환 시, 실제로는 **마스터 노트 참조**였던 케이스를 한 번 오인해서 링크 잃음 (realtime-vision-control/docs/perception-evolution.md) → 수동 수정 필요했음 | 일괄치환 후 반드시 각 파일 맥락 재확인. 특히 H1이 다른 노트 이름을 지칭하는 경우.
+- `2026-04-22` | 브랜치 전략 이해 | `sync.sh`가 main만 처리하는 걸 **"문제"로 프레이밍**했지만, 이는 올바른 설계. main = stable (Obsidian이 보는 것), feature branch = Claude 실험장. 검증 후 main으로 통합하는 게 정답 | **AR-6 후보**: feature 브랜치 작업 완료 시 사용자 검증 거쳐 main으로 merge. `sync.sh` 같은 싱크 스크립트가 main만 따라가는 건 브랜치 위생상 올바름. main 변경은 **의도적 merge 이벤트**여야 함.
 
 ---
 

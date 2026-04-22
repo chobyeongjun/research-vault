@@ -52,6 +52,8 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - `2026-04-22` | self-title `# [[Title]]` 패턴 | 파일명과 다른 제목을 wikilink로 감싸면 **phantom graph 노드** 생성 (e.g. `# [[LLM Wiki]]` in `llm-wiki.md` → "LLM Wiki"라는 빈 노드). 16개 파일에서 발견 | H1에는 wikilink 래퍼 금지. 평문 제목만.
 - `2026-04-22` | H1 self-link 일괄 수정 | sed로 `# \[\[X\]\]` → `# X` 정규치환 시, 실제로는 **마스터 노트 참조**였던 케이스를 한 번 오인해서 링크 잃음 (realtime-vision-control/docs/perception-evolution.md) → 수동 수정 필요했음 | 일괄치환 후 반드시 각 파일 맥락 재확인. 특히 H1이 다른 노트 이름을 지칭하는 경우.
 - `2026-04-22` | 브랜치 전략 이해 | `sync.sh`가 main만 처리하는 걸 **"문제"로 프레이밍**했지만, 이는 올바른 설계. main = stable (Obsidian이 보는 것), feature branch = Claude 실험장. 검증 후 main으로 통합하는 게 정답 | **AR-6 후보**: feature 브랜치 작업 완료 시 사용자 검증 거쳐 main으로 merge. `sync.sh` 같은 싱크 스크립트가 main만 따라가는 건 브랜치 위생상 올바름. main 변경은 **의도적 merge 이벤트**여야 함.
+- `2026-04-23` | graphify 정체 판단 | `--help` 출력만 보고 "Karpathy LLM Wiki 패턴의 정식 구현체"라고 **단정**. 실제로는 AST 기반 코드 그래프 툴이 메인이고 docs는 부가 기능. `_rebuild_code` 함수명이 1차 단서였는데 놓침 | **AR-7 후보**: 외부 툴 정체 파악 시 `--help`로 충분하지 않음. **3단계 확인 필수**: (1) `pip show PKG` 또는 `cat $(which BIN)`, (2) 설치 경로의 `__file__`·`dir()`, (3) 핵심 함수 소스 최소 head -80. 그 전까진 "아마도" 단정 금지.
+- `2026-04-23` | graphify bootstrap | `graphify hook install` 후 empty commit으로 bootstrap 시도 → 훅이 `CHANGED` 빈 값이면 `exit 0`이라 무반응. post-checkout 훅도 `graphify-out/` 이미 존재 조건이라 bootstrap 불가 | 외부 툴의 git hook은 **증분 갱신 전용일 가능성 높음**. 최초 build는 훅이 아닌 별도 엔트리 (CLI subcommand 또는 Python API)로 찾아야 함. `--help`에 없으면 소스 탐색.
 
 ---
 

@@ -57,6 +57,8 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - `2026-04-23` | Lessons vs graphify-out/memory 역할 분리 | 제가 만든 `Lessons.md` RL-loop은 **사람이 읽는 distilled 규칙 레이어**. graphify의 `graphify-out/memory/`는 **기계가 읽는 Q&A 히스토리**. 서로 대체 아니라 **보완** | Win 확정: 두 레이어 공존. Lessons는 Active Rules(수기 승격), memory는 쿼리 시 자동 save-result.
 - `2026-04-23` | `/graphify .` 최초 build 시 rate limit (429) | Vault 46 md 파일을 subagent 4개 병렬 dispatch → **분당 입력 30K 토큰 한도 초과** (Sonnet 4.6). chunks 1/3/4/5 실패, 2만 성공. 재시도도 window 미리셋으로 또 429 | **AR-8 후보**: `/graphify` 최초 build 시 **병렬 subagent 2개 이하**로 강제. chunk 크기도 20-25 → 10-12로 반감. skill.md 기본값(병렬 dispatch)은 코드 repo 기준이라 markdown vault엔 과함. 향후 graphify 실행 전 해당 지침을 inner 세션에 전달 필요.
 - `2026-04-23` | rate-limit 산수 누락 | "chunks 줄이고 순차 실행" 권장 후에도 **연속 429**. 원인: chunk 크기를 줄이지 않고 dispatch만 순차로 했음. 단일 subagent 입력이 이미 한도(30K) 초과 (~140K). 즉 dispatch 패턴 아닌 **chunk size 자체가 문제** | **AR-9 후보**: graphify 같은 LLM 도구 사용 전 **TPM ÷ 평균 토큰/파일 = 최대 chunk size** 산수 필수. 30K TPM에 6K 토큰/파일 vault면 chunk ≤ 5 files. skill.md 기본값은 코드 기준 (파일당 ~1-2K 토큰)이라 markdown엔 부적합.
+- `2026-04-23` | graphify 메인 세션도 rate-limited | chunks 1-12 성공 후 남은 11개 처리 중 **메인 Claude 세션 자체가 429** (subagent 아님). 원인: 누적 skill.md + 과거 chunk 결과로 main thread context가 이미 크고, 새 지시 메시지 보낼 때마다 30K 초과 | **AR-10 후보**: `/graphify`처럼 긴 세션은 **TPM 상한이 낮으면 중단 불가피**. 부분 graph라도 저장하고 session 재시작이 더 빠름. 또는 API tier 상향이 근본책. 다음 재시도는 **최소 1시간 후** (window 완전 리셋).
+- `2026-04-23` | 토큰 한도 vs vault 규모 mismatch | 46개 md / 200K 단어 vault는 30K TPM 한도에 **구조적으로 큰 규모**. "chunk 조절로 해결"이 아니라 "tier 안 맞으면 이 도구 못 씀"이 진실 | **검토사항**: graphify 같은 초기-일회성-대량 도구는 **Claude tier vs vault 크기** 사전 체크. 또는 분할 인덱싱 (`/graphify 10_Wiki/concepts` → `/graphify 10_Wiki/exosuit --update` 순차) 전략.
 
 ---
 

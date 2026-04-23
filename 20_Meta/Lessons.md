@@ -25,6 +25,7 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - **AR-3** repo 스타일이 있으면 **기존 형식 존중**. 멋대로 YAML 추가/제거 금지. 기존 샘플 1개 먼저 읽어볼 것.
 - **AR-4** 링크 수정 시 **3-pass 검증**: (1) 변경 → (2) grep으로 확인 → (3) 전체 vault broken-link 재스캔.
 - **AR-5** 깨진 링크를 "없는 노트로 stub 만들기"로 해결하기 전에, **이미 다른 이름으로 존재하는지** 먼저 확인 (예: `exosuit-protection` → 실제는 `robot-hardware-protection`).
+- **AR-6** Claude Code 세션 시작 시 **"Auth conflict" 경고가 뜨면 즉시 멈추고** `unset ANTHROPIC_API_KEY` + shell config에서 제거 후 재시작. 구독 사용자는 API 키가 우선 사용되면 낮은 tier로 과금 + rate limit에 갇힘. 429 디버깅 전에 `env | grep ANTHROPIC` 부터 확인할 것.
 
 ---
 
@@ -61,6 +62,7 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - `2026-04-23` | 토큰 한도 vs vault 규모 mismatch | 46개 md / 200K 단어 vault는 30K TPM 한도에 **구조적으로 큰 규모**. "chunk 조절로 해결"이 아니라 "tier 안 맞으면 이 도구 못 씀"이 진실 | **검토사항**: graphify 같은 초기-일회성-대량 도구는 **Claude tier vs vault 크기** 사전 체크. 또는 분할 인덱싱 (`/graphify 10_Wiki/concepts` → `/graphify 10_Wiki/exosuit --update` 순차) 전략.
 - `2026-04-23` | org TPM은 model-agnostic | Sonnet 4.6 429 → Opus 4.7로 전환했지만 **동일한 429**. 30K TPM은 org 단위 한도라서 모델 바꿔도 무의미. 주간 쿼터(Sonnet만 7%)와 TPM(분당)은 별개 | **AR-11 후보**: 429 나오면 모델 전환은 해결책 아님. 유일한 해결: (1) 세션 context 축소 (=새 세션), (2) 시간 대기 (1h+), (3) Tier 상향. 절대 같은 세션에서 재시도 루프 금지.
 - `2026-04-23` | inner 세션 context 폭주 | graphify 실행 중 skill.md + 누적 chunk 결과 + retry 메시지로 main thread context가 이미 30K 초과 → **어떤 새 메시지도 전송 불가**. 모델 전환도 메시지라 동일 실패 | **교훈**: 긴 skill 실행 중 뭔가 실패하면 세션 재시작이 가장 빠름. Retry 루프 돌면 context만 늘어 상태 악화. `.semantic_cache/` 덕분에 완료된 chunk는 보존됨.
+- `2026-04-23` | **ROOT CAUSE 발견: ANTHROPIC_API_KEY 환경변수 vs claude.ai 구독 충돌** | Max 20x ($200/mo) 구독 중인데 **Claude Code가 shell의 `ANTHROPIC_API_KEY`를 우선 사용** → 낮은 tier API의 30K TPM에 갇힘. 하루 종일 (chunks 1-12 단계적 실패 + 모델 전환 시도 전부) 이것 때문. 구독 quota는 멀쩡하게 남아있었음 | **AR-12 (즉시 승격)**: Claude Code 세션 시작 시 **"Auth conflict" 경고** 나오면 **즉시 멈추고 `unset ANTHROPIC_API_KEY`** 후 재시작. 해결 안 하면 구독비 내면서 API tier 한도 겪음. `env | grep ANTHROPIC` 한 번만 봤어도 하루 안 날렸음.
 
 ---
 

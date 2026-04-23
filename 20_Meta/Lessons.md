@@ -30,6 +30,9 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - **AR-4** 링크 수정 시 **3-pass 검증**: (1) 변경 → (2) grep으로 확인 → (3) 전체 vault broken-link 재스캔.
 - **AR-5** 깨진 링크를 "없는 노트로 stub 만들기"로 해결하기 전에, **이미 다른 이름으로 존재하는지** 먼저 확인 (예: `exosuit-protection` → 실제는 `robot-hardware-protection`).
 - **AR-6** Claude Code 세션 시작 시 **"Auth conflict" 경고가 뜨면 즉시 멈추고** `unset ANTHROPIC_API_KEY` + shell config에서 제거 후 재시작. 구독 사용자는 API 키가 우선 사용되면 낮은 tier로 과금 + rate limit에 갇힘. 429 디버깅 전에 `env | grep ANTHROPIC` 부터 확인할 것.
+- **AR-7** 펌웨어: **ISR 안에서 블로킹 호출 절대 금지** — BLE/UART/Serial/SD/delay 모두. ISR은 플래그·인덱스·버퍼 적재만. 실제 I/O는 loop()에서. 예산: 333Hz ISR = 3ms.
+- **AR-8** 펌웨어: **서로 다른 컨텍스트에서 같은 행의 데이터 샘플링 금지** — 센서 여러 개를 한 로그 행에 쓸 때는 동일 ISR 또는 동일 `noInterrupts()` 블록 안에서 원자적으로 읽을 것.
+- **AR-9** 펌웨어: **공유 상태(링 버퍼 인덱스·플래그) 수정 시 `noInterrupts()` 필수** — ISR과 loop()이 동시 접근하는 변수는 예외 없이 보호.
 
 ---
 
@@ -62,7 +65,13 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 
 <!-- YYYY-MM-DD | 컨텍스트 | [weight] 무엇이 틀렸나 → 다음엔 어떻게 -->
 
-- `2026-04-23` | exosuit hardware | [CRITICAL] **Loadcell 데이터 읽기/저장 안 됨** — 원인 미파악. ADS1234 ADC 또는 INA128UA 앰프 연결 문제 가능성. 힘 제어 전체가 이 데이터에 의존하므로 미해결 시 어시스턴스 벡터 제어 불가. → 다음 세션 최우선 진단.
+- `2026-04-23` | firmware/ISR | [CRITICAL] **ISR 안에서 BLE(블로킹 UART) 직접 호출** — 333Hz ISR 예산 3ms를 UART 송신이 초과 → 시스템 프리즈·간헐 리셋·BLE/로깅 전체 먹통. 수정: ISR은 `flag_sendBLE=true`만, 실제 송신은 loop()에서 `noInterrupts()` 스냅샷 후.
+- `2026-04-23` | firmware/ISR | [CRITICAL] **서로 다른 컨텍스트에서 샘플링** — A7은 loop(), L/R은 ISR에서 읽어 한 로그 행의 세 값이 다른 시각. 수정: A7도 ISR 최상단에서 같이 읽어 원자적 동시 샘플 보장.
+- `2026-04-23` | firmware/ISR | [CRITICAL] **공유 상태(logHead/logTail) 리셋 시 인터럽트 미보호** — 리셋 순간 ISR이 끼어들면 인덱스 꼬임. 수정: `noInterrupts()` 블록으로 감쌀 것.
+- `2026-04-23` | firmware/buffer | [WARNING] **링 버퍼 512 엔트리** — SD 쓰기 200ms만 튀어도 111Hz×0.5s=56 엔트리 반복 → 오버플로·CSV 빵꾸. 수정: 8192로 확장.
+- `2026-04-23` | firmware/buffer | [WARNING] **processLogBuffer() 무제한 루프** — 버퍼 밀리면 loop()이 수 초 멈춤 → BLE 명령 씹힘. 수정: 루프당 최대 50건 백프레셔.
+- `2026-04-23` | firmware/sd | [WARNING] **100행마다 flush** — SD 처리량 낭비로 쓰기 지연 유발. 수정: 2000행 또는 5초마다.
+- `2026-04-23` | firmware/sd | [WARNING] **헤더 write 후 flush 없음** — 부팅 직후 전원 끊기면 컬럼 헤더 없는 쓰레기 CSV. 수정: 헤더 write 직후 `flush()` 필수.
 - `2026-04-22` | wiki 수정 | [WARNING] repo 양식 무시하고 **YAML frontmatter 멋대로 추가** → AR-3 (기존 샘플 먼저 읽기).
 - `2026-04-22` | wiki 수정 | [WARNING] wikilink **임의 제거** → graph view/backlink 끊김. AR-1.
 - (history) | 여러 노트 | [WARNING] `[[exosuit-protection]]` 참조하지만 실제 파일명은 `robot-hardware-protection.md` → **깨진 링크 4개**. AR-5.

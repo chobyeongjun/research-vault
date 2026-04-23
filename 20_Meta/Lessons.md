@@ -62,6 +62,7 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 
 <!-- YYYY-MM-DD | 컨텍스트 | [weight] 무엇이 틀렸나 → 다음엔 어떻게 -->
 
+- `2026-04-23` | exosuit hardware | [CRITICAL] **Loadcell 데이터 읽기/저장 안 됨** — 원인 미파악. ADS1234 ADC 또는 INA128UA 앰프 연결 문제 가능성. 힘 제어 전체가 이 데이터에 의존하므로 미해결 시 어시스턴스 벡터 제어 불가. → 다음 세션 최우선 진단.
 - `2026-04-22` | wiki 수정 | [WARNING] repo 양식 무시하고 **YAML frontmatter 멋대로 추가** → AR-3 (기존 샘플 먼저 읽기).
 - `2026-04-22` | wiki 수정 | [WARNING] wikilink **임의 제거** → graph view/backlink 끊김. AR-1.
 - (history) | 여러 노트 | [WARNING] `[[exosuit-protection]]` 참조하지만 실제 파일명은 `robot-hardware-protection.md` → **깨진 링크 4개**. AR-5.

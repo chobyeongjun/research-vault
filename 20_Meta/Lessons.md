@@ -1,24 +1,28 @@
 ---
 title: Lessons (RL-loop memory)
-updated: 2026-04-22
+updated: 2026-04-23
 tags: [meta, rl-loop, claude-rules]
-summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Active Rules 섹션만 읽는다.
+summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Active Rules + Always Do만 읽는다.
 ---
 
 # Lessons — RL-loop Memory
 
 > **읽는 순서 (Claude, 세션 시작 시):**
-> 1. 아래 **Active Rules** 섹션만 먼저 읽는다 (토큰 절약).
+> 1. **Active Rules** + **Always Do** 섹션 먼저 읽는다 (토큰 절약).
 > 2. 작업 도중 "이거 전에 이슈 있었는데?" 싶으면 Wins/Misses 검색.
-> 3. 세션 종료 시 새 win/miss를 append. 반복 3회 이상이면 Active Rule로 승격.
+> 3. 세션 종료 시 새 win/miss를 append.
 >
-> **형식:** `YYYY-MM-DD | 컨텍스트 | 교훈` — 한 줄로.
+> **승격 조건:** 서로 다른 3회 이상 반복 **OR 사용자가 "무조건 기억해"라고 명시적으로 지시한 것**
+>
+> **가중치:** Misses → `[CRITICAL×10 | WARNING×5 | MINOR×1]` / Wins → `[HIGH×10 | MED×5 | LOW×1]`
+>
+> **형식:** `YYYY-MM-DD | 컨텍스트 | [weight] 교훈`
 
 ---
 
-## Active Rules (검증된 규칙 — 짧게 유지)
+## Active Rules (Punish 승격 — 하지 말 것)
 
-<!-- 3회 이상 반복된 Miss는 여기로 승격. 1줄씩. -->
+<!-- CRITICAL/WARNING Miss가 승격 조건 충족 시 여기로. 1줄씩. -->
 
 - **AR-1** wikilink는 항상 **basename만** — `[[h-walker]]` OK, `[[../../../10_Wiki/h-walker]]` 금지. Obsidian이 폴더 상관없이 basename으로 해석.
 - **AR-2** 새 개념 노트는 **소문자-kebab**. 한글 제목 절차 문서는 기존 이름 유지.
@@ -29,47 +33,70 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 
 ---
 
+## Always Do (Reward 승격 — 항상 할 것)
+
+<!-- HIGH Wins가 승격 조건 충족 시 여기로. 1줄씩. -->
+
+- **AD-1** 실험 트랙과 메인라인은 **Git 브랜치로 분리**. CLAUDE.md에 어느 브랜치가 stable인지 명시. outdated 베이스에서 재발명 차단.
+- **AD-2** 안전 한계값(HARD LIMIT)은 **CLAUDE.md에 수치로 박아둘 것** (예: 20ms, 70N). 주석 없이 맥락만 있으면 다음 세션이 오인함.
+- **AD-3** 긴 작업(graphify, 대규모 리팩토링) 완료 시 **milestone tag + summary 문서** 남기기. 다음 세션 zero-start 5분 파악 가능.
+
+---
+
 ## Wins (재사용할 패턴)
 
-<!-- YYYY-MM-DD | 컨텍스트 | 무엇이 좋았나 | 언제 재사용 -->
+<!-- YYYY-MM-DD | 컨텍스트 | [weight] 무엇이 좋았나 -->
 
-- `2026-04-22` | wiki 리팩토링 | Explore 에이전트로 **broken-link/orphan/naming/frontmatter/hub-coverage를 한 번에 진단** → 27개 깨진 링크·17개 고아를 즉시 발견 | 복잡도 높은 repo 구조 진단 시 항상 이 7-question 프레임 재사용.
-- `2026-04-22` | 폴더 재구성 | Obsidian wikilink는 basename 기준이라 **폴더 이동해도 링크 안 깨짐** → `git mv`로 안전하게 프로젝트별 분리 가능 | vault 재구성 시 두려워하지 말 것.
-- `2026-04-22` | 3-pass 검증 | (1) 변경 → (2) 대상별 grep → (3) 전체 vault 스캔 후 set-diff (`comm -23`) | 링크/이름 정합성 검증 시 재사용. 특히 basename-casing을 lowercase 통일 후 비교하면 false-positive 최소.
-- `2026-04-22` | stub 생성 전략 | 진짜로 없는 허브 개념([[exosuit]], [[graphify]], [[0xhenry-dev]], [[stm32h743]])만 최소한의 frontmatter+plan으로 stub 생성 → graph view 연결성 복구하면서도 fake content 안 채움 | 새 concept 노드가 필요할 때 stub+expand-later 패턴 재사용.
-- `2026-04-22` | dogfood RL-loop | 이번 리팩토링 자체를 Lessons.md의 첫 entries로 기록 → 다음 세션에서 Claude가 "지난번 이렇게 했네, 같은 방법"을 참고 가능 | 모든 구조적 작업은 Lessons에 최소 1 win + 0~1 miss 남기기.
+- `2026-04-22` | wiki 리팩토링 | [HIGH] Explore 에이전트로 **broken-link/orphan/naming/frontmatter/hub-coverage를 한 번에 진단** → 27개 깨진 링크·17개 고아를 즉시 발견. 복잡도 높은 repo 구조 진단 시 항상 이 7-question 프레임 재사용.
+- `2026-04-22` | 폴더 재구성 | [MED] Obsidian wikilink는 basename 기준이라 **폴더 이동해도 링크 안 깨짐** → `git mv`로 안전하게 프로젝트별 분리 가능.
+- `2026-04-22` | 3-pass 검증 | [MED] (1) 변경 → (2) 대상별 grep → (3) 전체 vault 스캔 후 set-diff (`comm -23`). basename lowercase 통일 후 비교하면 false-positive 최소.
+- `2026-04-22` | stub 생성 전략 | [LOW] 진짜로 없는 허브 개념만 최소 frontmatter+plan으로 stub 생성 → graph view 연결성 복구, fake content 안 채움.
+- `2026-04-22` | dogfood RL-loop | [LOW] 구조적 작업은 Lessons에 최소 1 win + 0~1 miss 남기기.
+- `2026-04-21` | perception | [HIGH] **Watchdog pause/resume during CUDA graph capture** — `stream.query()`가 다른 thread에서 capture invalidate. `capture_error_mode='thread_local'`은 무효. 명시적 pause/resume이 유일한 답. 매 run reproducible 80Hz 확보.
+- `2026-04-21` | perception | [HIGH] **EMA(smoothing) vs Constraint(outlier reject) 도구 분리** — EMA는 low-pass라 50cm jump 못 잡음. outlier reject는 bone_length / joint_velocity hard constraint. 이미 `constraints.py` 구현돼있었음, default OFF였음.
+- `2026-04-21` | process | [MED] **v0.1.0 tag + full-journey-summary.md** — 7 phase + 잘된 것/안된 것 + 영구 기각 목록. 다음 세션 5분 파악.
 
 ---
 
 ## Misses (교정 규칙)
 
-<!-- YYYY-MM-DD | 컨텍스트 | 무엇이 틀렸나 | 다음엔 어떻게 -->
+<!-- YYYY-MM-DD | 컨텍스트 | [weight] 무엇이 틀렸나 → 다음엔 어떻게 -->
 
-- `2026-04-22` | 이전 세션 wiki 수정 | repo의 `docs/lessons/README.md` 양식을 무시하고 **YAML frontmatter를 멋대로 추가**해서 스타일 깨짐 | AR-3 (기존 샘플 먼저 읽기).
-- `2026-04-22` | 이전 세션 wiki 수정 | wikilink를 **임의로 제거**하여 graph view/backlink가 끊김 | AR-1 (wikilink는 LLM wiki의 1급 시민, 절대 제거 금지).
-- (history) | 여러 노트에서 | `[[exosuit-protection]]`을 참조하지만 실제 파일명은 `robot-hardware-protection.md` → **깨진 링크 4개** 발생 | AR-5 (stub 만들기 전 alias 여부 확인).
-- (history) | `assistive-vector-treadmill/research_context.md` | 10_Wiki 개념 노트로 **wikilink 0개** → LLM이 프로젝트 맥락을 wiki와 연결 못 함 | 모든 프로젝트 루트 문서는 관련 wiki 노트 최소 3개 wikilink 필수.
-- (history) | `Index.md` | 37개 노트 중 18개만 나열 (커버리지 48%) → LLM이 Index만 보면 절반을 "없다"고 오인 | Index는 항상 전수 나열. 누락 감지 스크립트 필요.
-- `2026-04-22` | self-title `# [[Title]]` 패턴 | 파일명과 다른 제목을 wikilink로 감싸면 **phantom graph 노드** 생성 (e.g. `# [[LLM Wiki]]` in `llm-wiki.md` → "LLM Wiki"라는 빈 노드). 16개 파일에서 발견 | H1에는 wikilink 래퍼 금지. 평문 제목만.
-- `2026-04-22` | H1 self-link 일괄 수정 | sed로 `# \[\[X\]\]` → `# X` 정규치환 시, 실제로는 **마스터 노트 참조**였던 케이스를 한 번 오인해서 링크 잃음 (realtime-vision-control/docs/perception-evolution.md) → 수동 수정 필요했음 | 일괄치환 후 반드시 각 파일 맥락 재확인. 특히 H1이 다른 노트 이름을 지칭하는 경우.
-- `2026-04-22` | 브랜치 전략 이해 | `sync.sh`가 main만 처리하는 걸 **"문제"로 프레이밍**했지만, 이는 올바른 설계. main = stable (Obsidian이 보는 것), feature branch = Claude 실험장. 검증 후 main으로 통합하는 게 정답 | **AR-6 후보**: feature 브랜치 작업 완료 시 사용자 검증 거쳐 main으로 merge. `sync.sh` 같은 싱크 스크립트가 main만 따라가는 건 브랜치 위생상 올바름. main 변경은 **의도적 merge 이벤트**여야 함.
-- `2026-04-23` | graphify 정체 판단 (중간 오판) | `--help` 출력만 보고 "Karpathy LLM Wiki 패턴 = graphify"로 **단정**. 그 다음엔 "AST 코드 전용"으로 **또 단정**. 둘 다 틀렸음 — 실제로는 **Claude Code 슬래시 커맨드 skill**이 메인 엔진이고 CLI는 보조. `skill.md`를 마지막에야 읽음 | **AR-7 후보**: 외부 툴 정체 파악 시 **소스 전수 확인 전까지 단정 금지**. 특히 `skill.md`·`__main__.py`·CLI entry script 3개는 필수 선독.
-- `2026-04-23` | graphify bootstrap 경로 | `graphify hook install` 후 empty commit으로 bootstrap 시도 → 훅이 `CHANGED` 빈 값이면 `exit 0`이라 무반응. post-checkout 훅도 `graphify-out/` 기존재 조건. `_rebuild_code` 직접 호출도 "No code files found"로 실패 | 진짜 full-build는 **Claude Code 세션 내 `/graphify .` 슬래시 커맨드**. CLI hook은 증분 갱신 전용 (코드만). docs/md는 LLM 서브에이전트 병렬 추출 경유.
-- `2026-04-23` | Lessons vs graphify-out/memory 역할 분리 | 제가 만든 `Lessons.md` RL-loop은 **사람이 읽는 distilled 규칙 레이어**. graphify의 `graphify-out/memory/`는 **기계가 읽는 Q&A 히스토리**. 서로 대체 아니라 **보완** | Win 확정: 두 레이어 공존. Lessons는 Active Rules(수기 승격), memory는 쿼리 시 자동 save-result.
-- `2026-04-23` | `/graphify .` 최초 build 시 rate limit (429) | Vault 46 md 파일을 subagent 4개 병렬 dispatch → **분당 입력 30K 토큰 한도 초과** (Sonnet 4.6). chunks 1/3/4/5 실패, 2만 성공. 재시도도 window 미리셋으로 또 429 | **AR-8 후보**: `/graphify` 최초 build 시 **병렬 subagent 2개 이하**로 강제. chunk 크기도 20-25 → 10-12로 반감. skill.md 기본값(병렬 dispatch)은 코드 repo 기준이라 markdown vault엔 과함. 향후 graphify 실행 전 해당 지침을 inner 세션에 전달 필요.
-- `2026-04-23` | rate-limit 산수 누락 | "chunks 줄이고 순차 실행" 권장 후에도 **연속 429**. 원인: chunk 크기를 줄이지 않고 dispatch만 순차로 했음. 단일 subagent 입력이 이미 한도(30K) 초과 (~140K). 즉 dispatch 패턴 아닌 **chunk size 자체가 문제** | **AR-9 후보**: graphify 같은 LLM 도구 사용 전 **TPM ÷ 평균 토큰/파일 = 최대 chunk size** 산수 필수. 30K TPM에 6K 토큰/파일 vault면 chunk ≤ 5 files. skill.md 기본값은 코드 기준 (파일당 ~1-2K 토큰)이라 markdown엔 부적합.
-- `2026-04-23` | graphify 메인 세션도 rate-limited | chunks 1-12 성공 후 남은 11개 처리 중 **메인 Claude 세션 자체가 429** (subagent 아님). 원인: 누적 skill.md + 과거 chunk 결과로 main thread context가 이미 크고, 새 지시 메시지 보낼 때마다 30K 초과 | **AR-10 후보**: `/graphify`처럼 긴 세션은 **TPM 상한이 낮으면 중단 불가피**. 부분 graph라도 저장하고 session 재시작이 더 빠름. 또는 API tier 상향이 근본책. 다음 재시도는 **최소 1시간 후** (window 완전 리셋).
-- `2026-04-23` | 토큰 한도 vs vault 규모 mismatch | 46개 md / 200K 단어 vault는 30K TPM 한도에 **구조적으로 큰 규모**. "chunk 조절로 해결"이 아니라 "tier 안 맞으면 이 도구 못 씀"이 진실 | **검토사항**: graphify 같은 초기-일회성-대량 도구는 **Claude tier vs vault 크기** 사전 체크. 또는 분할 인덱싱 (`/graphify 10_Wiki/concepts` → `/graphify 10_Wiki/exosuit --update` 순차) 전략.
-- `2026-04-23` | org TPM은 model-agnostic | Sonnet 4.6 429 → Opus 4.7로 전환했지만 **동일한 429**. 30K TPM은 org 단위 한도라서 모델 바꿔도 무의미. 주간 쿼터(Sonnet만 7%)와 TPM(분당)은 별개 | **AR-11 후보**: 429 나오면 모델 전환은 해결책 아님. 유일한 해결: (1) 세션 context 축소 (=새 세션), (2) 시간 대기 (1h+), (3) Tier 상향. 절대 같은 세션에서 재시도 루프 금지.
-- `2026-04-23` | inner 세션 context 폭주 | graphify 실행 중 skill.md + 누적 chunk 결과 + retry 메시지로 main thread context가 이미 30K 초과 → **어떤 새 메시지도 전송 불가**. 모델 전환도 메시지라 동일 실패 | **교훈**: 긴 skill 실행 중 뭔가 실패하면 세션 재시작이 가장 빠름. Retry 루프 돌면 context만 늘어 상태 악화. `.semantic_cache/` 덕분에 완료된 chunk는 보존됨.
-- `2026-04-23` | **ROOT CAUSE 발견: ANTHROPIC_API_KEY 환경변수 vs claude.ai 구독 충돌** | Max 20x ($200/mo) 구독 중인데 **Claude Code가 shell의 `ANTHROPIC_API_KEY`를 우선 사용** → 낮은 tier API의 30K TPM에 갇힘. 하루 종일 (chunks 1-12 단계적 실패 + 모델 전환 시도 전부) 이것 때문. 구독 quota는 멀쩡하게 남아있었음 | **AR-12 (즉시 승격)**: Claude Code 세션 시작 시 **"Auth conflict" 경고** 나오면 **즉시 멈추고 `unset ANTHROPIC_API_KEY`** 후 재시작. 해결 안 하면 구독비 내면서 API tier 한도 겪음. `env | grep ANTHROPIC` 한 번만 봤어도 하루 안 날렸음.
+- `2026-04-22` | wiki 수정 | [WARNING] repo 양식 무시하고 **YAML frontmatter 멋대로 추가** → AR-3 (기존 샘플 먼저 읽기).
+- `2026-04-22` | wiki 수정 | [WARNING] wikilink **임의 제거** → graph view/backlink 끊김. AR-1.
+- (history) | 여러 노트 | [WARNING] `[[exosuit-protection]]` 참조하지만 실제 파일명은 `robot-hardware-protection.md` → **깨진 링크 4개**. AR-5.
+- (history) | project root | [MINOR] 프로젝트 루트 문서에 **wikilink 0개** → LLM이 wiki와 연결 못 함. 프로젝트 루트는 wiki 노트 최소 3개 wikilink 필수.
+- (history) | Index.md | [MINOR] 37개 노트 중 18개만 나열(커버리지 48%) → LLM이 절반을 "없다"고 오인. Index는 항상 전수 나열.
+- `2026-04-22` | self-title | [WARNING] `# [[Title]]` 패턴 → **phantom graph 노드** 생성. 16개 파일에서 발견. H1에는 wikilink 래퍼 금지.
+- `2026-04-22` | 일괄치환 | [WARNING] sed로 H1 self-link 일괄 수정 시 **마스터 노트 참조 케이스 오인**해서 링크 잃음. 일괄치환 후 맥락 재확인 필수.
+- `2026-04-22` | 브랜치 전략 | [MINOR] `sync.sh`가 main만 처리하는 걸 "문제"로 오인. main = stable, feature = 실험장. 올바른 설계였음.
+- `2026-04-23` | 외부 툴 파악 | [WARNING] `--help`만 보고 graphify 정체 단정 → 틀림. AR-7: 소스 전수 확인 전 단정 금지 (`skill.md` + `__main__.py` + CLI entry 3개 필수 선독).
+- `2026-04-23` | graphify bootstrap | [MINOR] empty commit으로 bootstrap 시도 → hook이 `CHANGED` 빈 값이면 `exit 0`. full-build는 `/graphify .` 슬래시 커맨드만.
+- `2026-04-23` | rate-limit 산수 | [WARNING] chunk size 안 줄이고 dispatch만 순차로 → 단일 subagent 입력이 이미 한도 초과. **TPM ÷ 파일당 토큰 = 최대 chunk size** 산수 필수.
+- `2026-04-23` | 429 대응 | [WARNING] Sonnet 429 → Opus 전환 시도 → 동일 429. 30K TPM은 org 단위, 모델 무관. 해결책: (1) 새 세션, (2) 1h+ 대기, (3) Tier 상향. **같은 세션 재시도 루프 절대 금지**.
+- `2026-04-23` | ANTHROPIC_API_KEY 충돌 | [CRITICAL] 구독 중인데 shell `ANTHROPIC_API_KEY`를 Claude Code가 우선 사용 → 낮은 tier API 30K TPM에 갇힘. 하루 날림 → **AR-6** (즉시 승격됨).
+- `2026-04-21` | safety | [CRITICAL] **Python에서 Teensy 직접 송신** → C++ control loop의 watchdog·5중 force clamp 우회. AK60 70N 안전 chain 무력화. 환자 위험.
+- `2026-04-21` | perception | [WARNING] **Silent fallback when CUDA graph capture fails** → eager 폴백으로 80Hz vs 40Hz 비결정성. 항상 명시적 retry + raise. silent X.
+- `2026-04-21` | process | [WARNING] **Outdated baseline에서 출발** → 최신 branch 확인 안 하고 구버전 재발명. 22ms/44Hz (vs 검증된 14ms/73Hz).
+- `2026-04-21` | perception | [WARNING] **Perception + matplotlib display 동일 스크립트 결합** → FPS 74→44 반토막. display는 별도 process 규칙 위반.
+- `2026-04-21` | perception | [WARNING] **EMA를 outlier 차단으로 오인** → alpha 올려봐야 50cm jump 15cm로 dampening만. outlier reject는 bone_length hard constraint가 답.
+- `2026-04-21` | process | [MINOR] **Vault에 git clone** → vault는 docs/notes 전용. iCloud sync와 .git 충돌 위험. pointer 노트 + handover만 vault에.
 
 ---
 
 ## 승격 규칙
 
-- Miss 항목이 **서로 다른 3개 이상의 세션**에서 반복 → Active Rule로 승격 (AR-N 부여).
-- Active Rule이 6개월 이상 반복되지 않으면 archive 섹션으로 이동 (아직 없음).
+**Punish 승격 (Misses → Active Rules):**
+- CRITICAL/WARNING Miss가 서로 다른 **3회 이상 반복** → Active Rule (AR-N 부여)
+- **또는 사용자가 "무조건 기억해"라고 명시적으로 지시한 것** → 즉시 승격
+
+**Reward 승격 (Wins → Always Do):**
+- HIGH Win이 서로 다른 **3회 이상 반복** → Always Do (AD-N 부여)
+- **또는 사용자가 "항상 해"라고 명시적으로 지시한 것** → 즉시 승격
+
+**Inbox → Lessons 흐름:**
+- skiro-learnings.md는 **자동 수집 Inbox** (노이즈 포함). 주기적으로 여기로 distill.
+- Active Rule이 6개월 이상 트리거되지 않으면 Archive로 이동.
 
 ---
 

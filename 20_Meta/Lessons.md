@@ -59,6 +59,8 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - `2026-04-23` | rate-limit 산수 누락 | "chunks 줄이고 순차 실행" 권장 후에도 **연속 429**. 원인: chunk 크기를 줄이지 않고 dispatch만 순차로 했음. 단일 subagent 입력이 이미 한도(30K) 초과 (~140K). 즉 dispatch 패턴 아닌 **chunk size 자체가 문제** | **AR-9 후보**: graphify 같은 LLM 도구 사용 전 **TPM ÷ 평균 토큰/파일 = 최대 chunk size** 산수 필수. 30K TPM에 6K 토큰/파일 vault면 chunk ≤ 5 files. skill.md 기본값은 코드 기준 (파일당 ~1-2K 토큰)이라 markdown엔 부적합.
 - `2026-04-23` | graphify 메인 세션도 rate-limited | chunks 1-12 성공 후 남은 11개 처리 중 **메인 Claude 세션 자체가 429** (subagent 아님). 원인: 누적 skill.md + 과거 chunk 결과로 main thread context가 이미 크고, 새 지시 메시지 보낼 때마다 30K 초과 | **AR-10 후보**: `/graphify`처럼 긴 세션은 **TPM 상한이 낮으면 중단 불가피**. 부분 graph라도 저장하고 session 재시작이 더 빠름. 또는 API tier 상향이 근본책. 다음 재시도는 **최소 1시간 후** (window 완전 리셋).
 - `2026-04-23` | 토큰 한도 vs vault 규모 mismatch | 46개 md / 200K 단어 vault는 30K TPM 한도에 **구조적으로 큰 규모**. "chunk 조절로 해결"이 아니라 "tier 안 맞으면 이 도구 못 씀"이 진실 | **검토사항**: graphify 같은 초기-일회성-대량 도구는 **Claude tier vs vault 크기** 사전 체크. 또는 분할 인덱싱 (`/graphify 10_Wiki/concepts` → `/graphify 10_Wiki/exosuit --update` 순차) 전략.
+- `2026-04-23` | org TPM은 model-agnostic | Sonnet 4.6 429 → Opus 4.7로 전환했지만 **동일한 429**. 30K TPM은 org 단위 한도라서 모델 바꿔도 무의미. 주간 쿼터(Sonnet만 7%)와 TPM(분당)은 별개 | **AR-11 후보**: 429 나오면 모델 전환은 해결책 아님. 유일한 해결: (1) 세션 context 축소 (=새 세션), (2) 시간 대기 (1h+), (3) Tier 상향. 절대 같은 세션에서 재시도 루프 금지.
+- `2026-04-23` | inner 세션 context 폭주 | graphify 실행 중 skill.md + 누적 chunk 결과 + retry 메시지로 main thread context가 이미 30K 초과 → **어떤 새 메시지도 전송 불가**. 모델 전환도 메시지라 동일 실패 | **교훈**: 긴 skill 실행 중 뭔가 실패하면 세션 재시작이 가장 빠름. Retry 루프 돌면 context만 늘어 상태 악화. `.semantic_cache/` 덕분에 완료된 chunk는 보존됨.
 
 ---
 

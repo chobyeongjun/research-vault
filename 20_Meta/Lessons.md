@@ -56,6 +56,7 @@ summary: 세션마다 누적되는 wins/misses. Claude는 세션 시작 시 Acti
 - `2026-04-23` | graphify bootstrap 경로 | `graphify hook install` 후 empty commit으로 bootstrap 시도 → 훅이 `CHANGED` 빈 값이면 `exit 0`이라 무반응. post-checkout 훅도 `graphify-out/` 기존재 조건. `_rebuild_code` 직접 호출도 "No code files found"로 실패 | 진짜 full-build는 **Claude Code 세션 내 `/graphify .` 슬래시 커맨드**. CLI hook은 증분 갱신 전용 (코드만). docs/md는 LLM 서브에이전트 병렬 추출 경유.
 - `2026-04-23` | Lessons vs graphify-out/memory 역할 분리 | 제가 만든 `Lessons.md` RL-loop은 **사람이 읽는 distilled 규칙 레이어**. graphify의 `graphify-out/memory/`는 **기계가 읽는 Q&A 히스토리**. 서로 대체 아니라 **보완** | Win 확정: 두 레이어 공존. Lessons는 Active Rules(수기 승격), memory는 쿼리 시 자동 save-result.
 - `2026-04-23` | `/graphify .` 최초 build 시 rate limit (429) | Vault 46 md 파일을 subagent 4개 병렬 dispatch → **분당 입력 30K 토큰 한도 초과** (Sonnet 4.6). chunks 1/3/4/5 실패, 2만 성공. 재시도도 window 미리셋으로 또 429 | **AR-8 후보**: `/graphify` 최초 build 시 **병렬 subagent 2개 이하**로 강제. chunk 크기도 20-25 → 10-12로 반감. skill.md 기본값(병렬 dispatch)은 코드 repo 기준이라 markdown vault엔 과함. 향후 graphify 실행 전 해당 지침을 inner 세션에 전달 필요.
+- `2026-04-23` | rate-limit 산수 누락 | "chunks 줄이고 순차 실행" 권장 후에도 **연속 429**. 원인: chunk 크기를 줄이지 않고 dispatch만 순차로 했음. 단일 subagent 입력이 이미 한도(30K) 초과 (~140K). 즉 dispatch 패턴 아닌 **chunk size 자체가 문제** | **AR-9 후보**: graphify 같은 LLM 도구 사용 전 **TPM ÷ 평균 토큰/파일 = 최대 chunk size** 산수 필수. 30K TPM에 6K 토큰/파일 vault면 chunk ≤ 5 files. skill.md 기본값은 코드 기준 (파일당 ~1-2K 토큰)이라 markdown엔 부적합.
 
 ---
 

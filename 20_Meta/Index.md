@@ -63,6 +63,7 @@ summary: Vault 전체 MOC. 모든 wiki 노트가 여기서 도달 가능. Claude
 
 ## 🗂 Meta
 
+- [[me]] — 개인 스펙 (프로젝트 현황, 기술 스택, 논문 트랙)
 - [[claude-rules]] — 세션 시작 규칙
 - [[Lessons]] — RL-loop 메모리 (wins/misses, Active Rules)
 - [[Log]] — 작업 로그

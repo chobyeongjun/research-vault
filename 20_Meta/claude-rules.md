@@ -21,6 +21,35 @@ summary: Claude가 세션 시작 시 읽는 최소 규칙. 토큰 절약 위해 
 - **새 교훈/스펙 발견** → 즉시 해당 wiki 노트에 기록 (또는 Lessons에 miss/win 추가).
 - **작업 완료** → `Log.md`에 한 줄 + 필요 시 `Lessons.md`에 win/miss 한 줄.
 
+## Vault Sync (Write = 토큰 0, 아낌없이 써라)
+
+### 프로젝트 ↔ Vault 대응
+| 코드 폴더 | Vault 경로 |
+|---|---|
+| `~/assistive-vector-treadmill/` | `~/research-vault/assistive-vector-treadmill/` |
+| `~/realtime-vision-control/` | `~/research-vault/realtime-vision-control/` |
+| `~/h-walker-graph-web/` | `~/research-vault/10_Wiki/h-walker-ai/h-walker-graph-web.md` |
+
+### 언제 vault 업데이트 (작업 완료 시 자동)
+- 새 실험 결과 확정 → `{project}/experiments/YYYY-MM-DD-{topic}.md` 생성
+- 회의 결과 → `{project}/meetings/YYYY-MM-DD-{topic}.md` 생성
+- 설계 결정/스펙 변경 → `research_context.md` 해당 섹션 수정
+- 버그/교훈 → `20_Meta/Lessons.md` + skiro-learnings 동시 기록
+- 매 세션 완료 → `20_Meta/Log.md` 한 줄
+
+### 실험 노트 포맷 (`experiments/YYYY-MM-DD-topic.md`)
+```
+---
+date: YYYY-MM-DD
+project: {project}
+topic: {한 줄 제목}
+result: pass | fail | partial
+---
+## 설정
+## 결과 (수치 포함)
+## 다음 단계
+```
+
 ## Wikilink 규약 (AR-1, AR-2)
 
 - **basename만** 사용. `[[h-walker]]` ✅ · `[[../../../10_Wiki/h-walker]]` ❌
